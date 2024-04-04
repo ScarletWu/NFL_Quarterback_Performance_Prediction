@@ -1,0 +1,137 @@
+---
+title: "NFL Quarterback Performance Analysis"
+author: "Scarlet Ruoxian Wu"
+date: "`r Sys.Date()`"
+format: pdf
+---
+
+# Introduction
+
+This paper presents an analysis of NFL quarterback performance over the recent seasons. Utilizing the `nflverse` dataset, we aim to explore aggregate performance metrics, identify trends, and model predictive performance factors. The absence of direct experience data challenges us to leverage alternative analytical strategies to understand quarterback effectiveness and predict future performance.
+
+# Data Preparation
+
+To begin our analysis, we filter the data for quarterbacks, focusing on the regular season performance of the last three years.
+
+```{r}
+#| include: false
+library(nflverse)
+library(dplyr)
+library(ggplot2)
+library(tidymodels)
+library(knitr)
+
+qb_regular_season_stats <- load_player_stats(seasons = TRUE) %>% 
+  filter(season_type == "REG" & position == "QB")
+```
+
+# Recent Seasons Focus
+Given the rapid evolution of playing styles and strategies in the NFL, our analysis will concentrate on the most recent three seasons to ensure relevance and accuracy in our findings.
+
+```{r}
+#| include: false
+recent_stats <- qb_regular_season_stats %>%
+  filter(season >= 2021)
+```
+
+
+# Performance Metrics Aggregation
+We aggregate key performance metrics for each quarterback across seasons to establish a foundation for in-depth analysis and comparison.
+
+```{r}
+#| include: false
+qb_summary <- recent_stats %>%
+  group_by(player_display_name, season) %>%
+  summarise(
+    total_passing_yards = sum(passing_yards),
+    total_passing_tds = sum(passing_tds),
+    total_interceptions = sum(interceptions),
+    average_yards_per_game = mean(passing_yards),
+    .groups = 'drop'
+  )
+```
+
+# Visual Analysis of Performance
+Visualizing these metrics in @fig-1 allows us to quickly identify top performers and observe trends over time. For instance, we explore the average passing yards per game for quarterbacks in the latest season.
+
+```{r}
+#| label: fig-1
+#| fig-cap: Visualization of the model
+#| echo: false
+#| warning: false
+#| message: false
+ggplot(qb_summary %>% filter(season == 2023), aes(x = reorder(player_display_name, -average_yards_per_game), y = average_yards_per_game)) +
+  geom_bar(stat = "identity") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 5)) +
+  labs(x = "Quarterback", y = "Average Passing Yards per Game", title = "2023 Season: QBs Average Passing Yards per Game")
+```
+
+
+# Predictive Modeling
+To predict future quarterback performance, we develop a model based on the aggregated performance data. Our model aims to predict the average yards per game, a key indicator of quarterback effectiveness.
+
+```{r}
+#| label: fig-2
+#| fig-cap: Visualization of the model
+#| echo: false
+#| warning: false
+#| message: false
+
+data_split <- initial_split(qb_summary, prop = 0.75) 
+train_data <- training(data_split)
+test_data <- testing(data_split)
+
+model_spec <- linear_reg() %>% 
+  set_engine("lm")
+
+model_fit <- model_spec %>%
+  fit(average_yards_per_game ~ total_passing_yards + total_passing_tds + total_interceptions, data = train_data)
+
+predictions <- predict(model_fit, new_data = train_data) %>%
+  bind_cols(train_data)
+
+ggplot(predictions, aes(x = average_yards_per_game, y = .pred)) +
+  geom_point(alpha = 0.5) +
+  geom_line(aes(x = average_yards_per_game, y = average_yards_per_game), color = "red") +
+  labs(x = "Actual Average Yards per Game", y = "Predicted Average Yards per Game", 
+       title = "Actual vs. Predicted Average Yards per Game") +
+  theme_minimal() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue", linetype = "dashed")
+
+
+```
+# Model Evaluation
+Evaluating the model's accuracy and reliability is crucial to understanding its applicability.
+
+@fig-2 presents a comparison between actual and predicted average yards per game for NFL quarterbacks. Each point on the graph represents an individual quarterback, with the x-axis showing the actual average yards per game and the y-axis depicting the model's predictions for those same players.
+
+The red line on the graph is the line of perfect prediction. Any point that lies on this line represents an instance where the model's prediction was exactly the same as the actual average yards per game. The blue dashed line represents the best fit line through the predicted values, showing the overall trend in the model's predictions. The spread of points around this line reflects the variance in the model's predictions. The graph allows us to visually assess the model's predictive accuracy and identify patterns or outliers in quarterback performance.
+
+```{r}
+#| include: false
+results <- predict(model_fit, new_data = test_data) %>%
+  bind_cols(test_data) %>%
+  metrics(truth = average_yards_per_game, estimate = .pred)
+print(results)
+
+```
+
+```{r}
+#| message: false
+#| echo: false
+#| warning: false
+#| label: tbl-1
+#| tbl-cap: Model Evaluation
+results <- data.frame(
+  metric = c("rmse", "rsq", "mae"),
+  estimator = c("standard", "standard", "standard"),
+  estimate = c(54.04363, 0.6556173, 41.34847)
+)
+
+kable(results, caption = "Model Performance Metrics")
+```
+The @tbl-1 shows three metrics for evaluating a predictive model. RMSE is 54.04, which is the average difference between predicted and actual values. R² is 0.6556, which indicates a strong fit. MAE is 41.35, which is the average absolute difference between predicted and actual values. Lower RMSE and MAE, and higher R² mean a better fit.
+
+
+# Conclusion
+This study demonstrates the potential of analyzing aggregated performance metrics and recent season trends to predict NFL quarterback performance. Although direct experience data is lacking, our approach provides valuable insights into quarterback effectiveness.
