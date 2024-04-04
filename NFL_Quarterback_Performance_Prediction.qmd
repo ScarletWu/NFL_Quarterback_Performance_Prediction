@@ -7,11 +7,11 @@ format: pdf
 
 # Introduction
 
-This paper presents an analysis of NFL quarterback performance over the recent seasons. Utilizing the `nflverse` dataset, we aim to explore aggregate performance metrics, identify trends, and model predictive performance factors. The absence of direct experience data challenges us to leverage alternative analytical strategies to understand quarterback effectiveness and predict future performance.
+This paper presents an analysis of NFL quarterback performance over the recent seasons. Utilizing the `nflverse` dataset, I aim to explore aggregate performance metrics, identify trends, and model predictive performance factors. The absence of direct experience data challenges us to leverage alternative analytical strategies to understand quarterback effectiveness and predict future performance.
 
-# Data Preparation
-
-To begin our analysis, we filter the data for quarterbacks, focusing on the regular season performance of the last three years.
+# Analysis
+## Data Preparation
+To begin our analysis, I filter the data for quarterbacks, focusing on the regular season performance of the last three years.
 
 ```{r}
 #| include: false
@@ -25,7 +25,7 @@ qb_regular_season_stats <- load_player_stats(seasons = TRUE) %>%
   filter(season_type == "REG" & position == "QB")
 ```
 
-# Recent Seasons Focus
+## Recent Seasons
 Given the rapid evolution of playing styles and strategies in the NFL, our analysis will concentrate on the most recent three seasons to ensure relevance and accuracy in our findings.
 
 ```{r}
@@ -35,8 +35,8 @@ recent_stats <- qb_regular_season_stats %>%
 ```
 
 
-# Performance Metrics Aggregation
-We aggregate key performance metrics for each quarterback across seasons to establish a foundation for in-depth analysis and comparison.
+## Performance Metrics Aggregation
+I aggregate key performance metrics for each quarterback across seasons to establish a foundation for in-depth analysis and comparison.
 
 ```{r}
 #| include: false
@@ -51,8 +51,8 @@ qb_summary <- recent_stats %>%
   )
 ```
 
-# Visual Analysis of Performance
-Visualizing these metrics in @fig-1 allows us to quickly identify top performers and observe trends over time. For instance, we explore the average passing yards per game for quarterbacks in the latest season.
+## Visual Analysis of Performance
+Visualizing these metrics in @fig-1 allows us to quickly identify top performers and observe trends over time. For instance, I explore the average passing yards per game for quarterbacks in the latest season.
 
 ```{r}
 #| label: fig-1
@@ -68,7 +68,7 @@ ggplot(qb_summary %>% filter(season == 2023), aes(x = reorder(player_display_nam
 
 
 # Predictive Modeling
-To predict future quarterback performance, we develop a model based on the aggregated performance data. Our model aims to predict the average yards per game, a key indicator of quarterback effectiveness.
+To predict future quarterback performance, I develop a model based on the aggregated performance data. Our model aims to predict the average yards per game, a key indicator of quarterback effectiveness.
 
 ```{r}
 #| label: fig-2
@@ -100,7 +100,7 @@ ggplot(predictions, aes(x = average_yards_per_game, y = .pred)) +
 
 
 ```
-# Model Evaluation
+## Model Evaluation
 Evaluating the model's accuracy and reliability is crucial to understanding its applicability.
 
 @fig-2 presents a comparison between actual and predicted average yards per game for NFL quarterbacks. Each point on the graph represents an individual quarterback, with the x-axis showing the actual average yards per game and the y-axis depicting the model's predictions for those same players.
@@ -132,6 +132,7 @@ kable(results, caption = "Model Performance Metrics")
 ```
 The @tbl-1 shows three metrics for evaluating a predictive model. RMSE is 54.04, which is the average difference between predicted and actual values. R² is 0.6556, which indicates a strong fit. MAE is 41.35, which is the average absolute difference between predicted and actual values. Lower RMSE and MAE, and higher R² mean a better fit.
 
+\newpage
 
 # Conclusion
 This study demonstrates the potential of analyzing aggregated performance metrics and recent season trends to predict NFL quarterback performance. Although direct experience data is lacking, our approach provides valuable insights into quarterback effectiveness.
